@@ -10,6 +10,10 @@ using SampleWebApiAspNetCore.Helpers;
 using System.Text.Json;
 using System.Linq.Dynamic.Core;
 using Microsoft.AspNetCore.WebUtilities;
+using AutoMapper.QueryableExtensions;
+using SampleWebApiAspNetCore.Services;
+using System.Threading.Tasks;
+using Microsoft.EntityFrameworkCore;
 
 namespace SampleWebApiAspNetCore.v1.Controllers
 {
@@ -72,7 +76,28 @@ namespace SampleWebApiAspNetCore.v1.Controllers
                 .Skip(queryParameters.PageCount * (queryParameters.Page - 1))
                 .Take(queryParameters.PageCount);
         }
+        private IList<Paciente> GetFilter(FilterDTO filter)
+        {
 
+            IQueryable<Paciente> _allItems = _context.Paciente;
+            _allItems = _allItems.ToFilterView(filter);
+            return _allItems.ToList();
+        }
+
+        [HttpPost]
+        [Route("filter")]
+        public ActionResult GetFilterPaciente(ApiVersion version, FilterDTO filter)
+        {
+            List<Paciente> paciente = GetFilter(filter).ToList();
+            var allItemCount = _context.Paciente.Count();
+
+            var toReturn = paciente.Select(x => ExpandSinglePacienteItem(x, version));
+
+            return Ok(new
+            {
+                value = toReturn
+            });
+        }
 
         [HttpGet(Name = nameof(GetAllPaciente))]
         public ActionResult GetAllPaciente(ApiVersion version, [FromQuery] QueryParameters queryParameters)
@@ -101,6 +126,7 @@ namespace SampleWebApiAspNetCore.v1.Controllers
                 links = links
             });
         }
+
 
         [HttpGet]
         [Route("{id:int}", Name = nameof(GetSinglePaciente))]
