@@ -149,9 +149,15 @@ namespace SampleWebApiAspNetCore.v1.Controllers
             {
                 return BadRequest();
             }
+            Utilizador toAddUtil = new Utilizador{Login=pacienteCreateDto.NIF, Senha= pacienteCreateDto.Senha };
+            _context.Utilizador.Add(toAddUtil);
+
+            if (_context.SaveChanges() == 0) {
+                throw new Exception("Creating a Utilizador failed on save.");
+            }
 
             Paciente toAdd = _mapper.Map<Paciente>(pacienteCreateDto);
-
+            toAdd.IdUtilizador = toAddUtil.IdUtilizador;
             _context.Add(toAdd);
 
             if (_context.SaveChanges() == 0)

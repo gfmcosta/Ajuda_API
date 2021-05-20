@@ -16,5 +16,7 @@ namespace SampleWebApiAspNetCore.Dtos
         public string CC { get; set; }
         public string NIF { get; set; }
 
+        public string Senha { get; set; }
+
     }
 }
