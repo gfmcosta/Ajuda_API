@@ -2,8 +2,7 @@
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Linq;
-
-#nullable disable
+using AutoMapper.Configuration.Annotations;
 
 namespace SampleWebApiAspNetCore.Models
 {
@@ -13,18 +12,21 @@ namespace SampleWebApiAspNetCore.Models
         public int IdUtilizador { get; set; }
         public string Login { get; set; }
         public string Senha { get; set; }
+      
+        [Ignore]
+        public virtual Funcionario Funcionario { get; set; }
+        [Ignore]
+        public virtual Paciente Paciente { get; set; }
 
-        public virtual ICollection<Funcionario> Funcionarios { get; set; }
-        public virtual ICollection<Paciente> Pacientes { get; set; }
-
+        [Ignore]
         [NotMapped]
         public string Perfil
         {
             get
             {
-                return ((Pacientes != null) ? "Paciente" : (Funcionarios == null) ? "NãoAtribuido" : Funcionarios.First().FuncaoNavigation.Descricao);
+                return ((Paciente != null) ? "Paciente" : (Funcionario == null) ? "NãoAtribuido" : Funcionario.FuncaoNavigation.Descricao);
             }
         }
-
+        
     }
 }

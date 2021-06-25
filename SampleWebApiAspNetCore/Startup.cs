@@ -67,7 +67,12 @@ namespace SampleWebApiAspNetCore
             services.AddVersioning();
             //services.AddTransient<IConfigureOptions<SwaggerGenOptions>, ConfigureSwaggerOptions>();
 
+            // Mappins
             services.AddAutoMapper(typeof(FuncaoMappings));
+            services.AddAutoMapper(typeof(FuncionarioMappings));
+            services.AddAutoMapper(typeof(MarcacaoMappings));
+            services.AddAutoMapper(typeof(PacienteMappings));
+            services.AddAutoMapper(typeof(UtilizadorMappings));
 
             services.AddSwaggerGen(swagger =>
             {

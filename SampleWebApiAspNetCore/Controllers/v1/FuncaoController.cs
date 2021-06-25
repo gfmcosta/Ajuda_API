@@ -9,6 +9,7 @@ using SampleWebApiAspNetCore.Models;
 using SampleWebApiAspNetCore.Helpers;
 using System.Text.Json;
 using System.Linq.Dynamic.Core;
+using Microsoft.AspNetCore.WebUtilities;
 
 namespace SampleWebApiAspNetCore.v1.Controllers
 {
@@ -34,18 +35,35 @@ namespace SampleWebApiAspNetCore.v1.Controllers
 
         private IQueryable<Funcao> GetAll(QueryParameters queryParameters)
         {
+            IQueryable<Funcao> _allItems = _context.Funcao;
 
-            IQueryable<Funcao> _allItems = _context.Funcao.OrderBy(queryParameters.OrderBy,
-              queryParameters.IsDescending());
+            if (queryParameters.OrderBy != "") {
+                _allItems = _allItems.OrderBy(queryParameters.OrderBy,
+                  queryParameters.IsDescending());
+            }
 
-            
-            if (queryParameters.HasQuery())
-            {
-                _allItems = _allItems
-                    .Where(x => x.Descricao.Contains(queryParameters.Query.ToLowerInvariant()));
+
+            if (queryParameters.HasQuery()) {
+                var queryString = QueryHelpers.ParseQuery(queryParameters.Query);
+                // queryString.GetType() --> typeof(Dictionary<String,StringValues>)
+
+
+                foreach (var query in queryString) {
+                    var filter = query.Value.Count > 0 ? query.Value[0] : "";
+                    if (filter != "") {
+                        switch (query.Key.ToLower()) {
+                            case "idfuncao":
+                                _allItems = _allItems
+                                    .Where(x => x.IdFuncao.ToString() == filter);
+                                break;
+                        }
+                    }
+                }
+
             }
 
             return _allItems
+                .OrderByDescending(x => x.IdFuncao)
                 .Skip(queryParameters.PageCount * (queryParameters.Page - 1))
                 .Take(queryParameters.PageCount);
         }

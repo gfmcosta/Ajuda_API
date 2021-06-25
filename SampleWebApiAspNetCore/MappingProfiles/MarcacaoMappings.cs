@@ -10,6 +10,7 @@ namespace SampleWebApiAspNetCore.MappingProfiles
             CreateMap<Marcacao, MarcacaoDto>().ReverseMap();
             CreateMap<Marcacao, MarcacaoUpdateDto>().ReverseMap();
             CreateMap<Marcacao, MarcacaoCreateDto>().ReverseMap();
+
         }
     }
 }

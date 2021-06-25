@@ -1,6 +1,7 @@
 ﻿using AutoMapper;
 using Microsoft.AspNetCore.JsonPatch;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.WebUtilities;
 using SampleWebApiAspNetCore.Dtos;
 using SampleWebApiAspNetCore.Helpers;
 using SampleWebApiAspNetCore.Models;
@@ -37,19 +38,41 @@ namespace SampleWebApiAspNetCore.v1.Controllers
         {
             IQueryable<Utilizador> _allItems = _context.Utilizador;
 
-            if (queryParameters.OrderBy != "")
-            {
+            if (queryParameters.OrderBy != "") {
                 _allItems = _allItems.OrderBy(queryParameters.OrderBy,
                   queryParameters.IsDescending());
             }
 
-            if (queryParameters.HasQuery())
-            {
-                _allItems = _allItems
-                    .Where(x => x.Login.Contains(queryParameters.Query.ToLowerInvariant()));
+
+            if (queryParameters.HasQuery()) {
+                var queryString = QueryHelpers.ParseQuery(queryParameters.Query);
+                // queryString.GetType() --> typeof(Dictionary<String,StringValues>)
+
+
+                foreach (var query in queryString) {
+                    var filter = query.Value.Count > 0 ? query.Value[0] : "";
+                    if (filter != "") {
+                        switch (query.Key.ToLower()) {
+                            case "login":
+                                _allItems = _allItems
+                                    .Where(x => x.Login==filter);
+                                break;
+                            case "senha":
+                                _allItems = _allItems
+                                    .Where(x => x.Senha == filter);
+                                break;
+                            case "idutilizador":
+                                _allItems = _allItems
+                                    .Where(x => x.IdUtilizador.ToString() == filter);
+                                break;
+                        }
+                    }
+                }
+
             }
 
             return _allItems
+                .OrderByDescending(x => x.Login)
                 .Skip(queryParameters.PageCount * (queryParameters.Page - 1))
                 .Take(queryParameters.PageCount);
         }

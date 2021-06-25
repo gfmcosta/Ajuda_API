@@ -18,7 +18,16 @@ namespace SampleWebApiAspNetCore.Services
             {
                 // User
                 // Falta a gerar a hash ... https://andrewlock.net/exploring-the-asp-net-core-identity-passwordhasher/
-                context.Utilizador.Add(new Utilizador() { Login = "Admin", Senha = "123" });
+                context.Funcao.Add(new Funcao() { Descricao = "Médico" });
+                context.Funcao.Add(new Funcao() { Descricao = "Enfermeiro" });
+                context.Funcao.Add(new Funcao() { Descricao = "Administrativo" });
+                context.Funcao.Add(new Funcao() { Descricao = "Técnico" });
+                context.Funcao.Add(new Funcao() { Descricao = "Admin" });
+                context.Utilizador.Add(new Utilizador() { Login = "000000000", Senha = "a665a45920422f9d417e4867efdc4fb8a04a1f3fff1fa07e998e86f7f7a27ae3" });
+                context.Funcionario.Add(new Funcionario() { IdUtilizador=1, Nome="Administrador", Sexo="Masculino ", Telemovel="000000000",
+                    Nacionalidade="Portugal", DataNasc=new DateTime(2003,01,24),Email= "noreply.ajudamais@gmail.com",Cc="00000000", 
+                    Nif="000000000", Funcao=5});
+
                 await context.SaveChangesAsync();
             }
 

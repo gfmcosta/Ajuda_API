@@ -8,6 +8,7 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
 using SampleWebApiAspNetCore.Dtos;
@@ -75,8 +76,8 @@ namespace SampleWebApiAspNetCore.v1.Controllers
         private async Task<bool> AuthenticateUser(string login, string senha)
         {
 
-            Utilizador utilizador = _context.Utilizador
-                .Where(u => u.Login == login && u.Senha == senha).FirstOrDefault();
+            Utilizador utilizador = await _context.Utilizador
+                .Where(u => u.Login == login && u.Senha == senha).FirstOrDefaultAsync();
 
             if (utilizador != null)
             {

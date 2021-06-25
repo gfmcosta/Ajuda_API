@@ -9,6 +9,8 @@ using SampleWebApiAspNetCore.Models;
 using SampleWebApiAspNetCore.Helpers;
 using System.Text.Json;
 using System.Linq.Dynamic.Core;
+using Microsoft.AspNetCore.WebUtilities;
+using SampleWebApiAspNetCore.Services;
 
 namespace SampleWebApiAspNetCore.v1.Controllers
 {
@@ -32,22 +34,79 @@ namespace SampleWebApiAspNetCore.v1.Controllers
             _urlHelper = urlHelper;
         }
 
-        private IQueryable<Marcacao> GetAll(QueryParameters queryParameters)
-        {
+        private IQueryable<Marcacao> GetAll(QueryParameters queryParameters) {
 
-            IQueryable<Marcacao> _allItems = _context.Marcacao.OrderBy(queryParameters.OrderBy,
-              queryParameters.IsDescending());
+            IQueryable<Marcacao> _allItems = _context.Marcacao;
 
-            
-            if (queryParameters.HasQuery())
-            {
-                _allItems = _allItems
-                    .Where(x => x.IdMarcacao.ToString().Contains(queryParameters.Query.ToLowerInvariant()));
+            if (queryParameters.OrderBy != "") {
+                _allItems = _allItems.OrderBy(queryParameters.OrderBy,
+                  queryParameters.IsDescending());
             }
 
-            return _allItems
+
+            if (queryParameters.HasQuery()) {
+                var queryString = QueryHelpers.ParseQuery(queryParameters.Query);
+                // queryString.GetType() --> typeof(Dictionary<String,StringValues>)
+
+
+                foreach (var query in queryString) {
+                    var filter = query.Value.Count > 0 ? query.Value[0] : "";
+                    if (filter != "") {
+                        switch (query.Key.ToLower()) {
+                            case "idmarcacao":
+                                _allItems = _allItems
+                                    .Where(x => x.IdMarcacao.ToString() == filter);
+                                break;
+                            case "data":
+                                _allItems = _allItems
+                                    .Where(x => x.Data.ToString() == filter);
+                                break;
+                            case "hora":
+                                _allItems = _allItems
+                                    .Where(x => x.Hora.ToString() == filter);
+                                break;
+                            case "idfuncionario":
+                                _allItems = _allItems
+                                    .Where(x => x.IdFuncionario.ToString() == filter);
+                                break;
+                            case "idpaciente":
+                                _allItems = _allItems
+                                    .Where(x => x.IdPaciente.ToString() == filter);
+                                break;
+                            case "idtecnico":
+                                _allItems = _allItems
+                                    .Where(x => x.IdTecnico.ToString() == filter);
+                                break;
+                        }
+                     }
+                }
+
+                
+            }
+
+            return _allItems.OrderByDescending(x => x.IdMarcacao)
                 .Skip(queryParameters.PageCount * (queryParameters.Page - 1))
                 .Take(queryParameters.PageCount);
+        }
+
+        private IList<Marcacao> GetFilter(FilterDTO filter) {
+
+            IQueryable<Marcacao> _allItems = _context.Marcacao;
+            _allItems = _allItems.ToFilterView(filter);
+            return _allItems.ToList();
+        }
+
+        [HttpPost]
+        [Route("filter")]
+        public ActionResult GetFilterMarcacao(ApiVersion version, FilterDTO filter) {
+            List<Marcacao> marcacao = GetFilter(filter).ToList();
+            var allItemCount = _context.Marcacao.Count();
+
+            var toReturn = marcacao.Select(x => ExpandSingleMarcacaoItem(x, version));
+
+            return Ok(new {
+                value = toReturn
+            });
         }
 
 
@@ -103,6 +162,10 @@ namespace SampleWebApiAspNetCore.v1.Controllers
 
             Marcacao toAdd = _mapper.Map<Marcacao>(marcacaoCreateDto);
 
+            if (toAdd.IdFuncionario == 0) {
+                toAdd.IdFuncionario = null;
+            }
+
             _context.Add(toAdd);
 
             if (_context.SaveChanges() == 0)
@@ -110,11 +173,11 @@ namespace SampleWebApiAspNetCore.v1.Controllers
                 throw new Exception("Creating a marcacao failed on save.");
             }
 
-            Marcacao newMarcacaoItem = _context.Marcacao.FirstOrDefault(x => x.IdMarcacao == toAdd.IdMarcacao);
+          //  Marcacao newMarcacaoItem = _context.Marcacao.FirstOrDefault(x => x.IdMarcacao == toAdd.IdMarcacao);
 
             return CreatedAtRoute(nameof(GetSingleMarcacao),
-                new { version = version.ToString(), id = newMarcacaoItem.IdMarcacao },
-                _mapper.Map<Marcacao>(newMarcacaoItem));
+                new { version = version.ToString(), id = toAdd.IdMarcacao },
+                _mapper.Map<MarcacaoCreateDto>(toAdd));
         }
 
         [HttpPatch("{id:int}", Name = nameof(PartiallyUpdateMarcacao))]
@@ -182,6 +245,7 @@ namespace SampleWebApiAspNetCore.v1.Controllers
             {
                 return BadRequest();
             }
+           
 
             var existingMarcacaoItem = _context.Marcacao.FirstOrDefault(x => x.IdMarcacao == id);
 
@@ -191,6 +255,10 @@ namespace SampleWebApiAspNetCore.v1.Controllers
             }
 
             _mapper.Map(marcacaoUpdateDto, existingMarcacaoItem);
+
+            if (existingMarcacaoItem.IdFuncionario == 0) {
+                existingMarcacaoItem.IdFuncionario = null;
+            }
 
             _context.Update(existingMarcacaoItem);
 
@@ -262,6 +330,9 @@ namespace SampleWebApiAspNetCore.v1.Controllers
         {
             var links = GetLinks(marcacao.IdMarcacao, version);
             Marcacao item = _mapper.Map<Marcacao>(marcacao);
+            if (item.IdFuncionario == null) {
+                item.IdFuncionario = 0;
+            }
 
             var resourceToReturn = item.ToDynamic() as IDictionary<string, object>;
             resourceToReturn.Add("links", links);

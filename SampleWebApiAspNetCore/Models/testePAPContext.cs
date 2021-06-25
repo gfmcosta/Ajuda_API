@@ -19,7 +19,6 @@ namespace SampleWebApiAspNetCore.Models
 
         public virtual DbSet<Funcao> Funcao { get; set; }
         public virtual DbSet<Funcionario> Funcionario { get; set; }
-        public virtual DbSet<FuncionarioMarcacao> FuncionarioMarcacao { get; set; }
         public virtual DbSet<Marcacao> Marcacao { get; set; }
         public virtual DbSet<Paciente> Paciente { get; set; }
         public virtual DbSet<Utilizador> Utilizador { get; set; }
@@ -82,36 +81,9 @@ namespace SampleWebApiAspNetCore.Models
                     .OnDelete(DeleteBehavior.ClientSetNull)
                     .HasConstraintName("FK_Funcionario_Funcao");
 
-                entity.HasOne(d => d.IdUtilizadorNavigation)
-                    .WithMany(p => p.Funcionarios)
-                    .HasForeignKey(d => d.IdUtilizador)
-                    .OnDelete(DeleteBehavior.ClientSetNull)
-                    .HasConstraintName("FK_Funcionario_Utilizador");
             });
 
-            modelBuilder.Entity<FuncionarioMarcacao>(entity =>
-            {
-                entity.HasKey(e => e.IdFuncionarioMarcacao);
-
-                entity.ToTable("Funcionario_Marcacao");
-
-                entity.Property(e => e.IdFuncionarioMarcacao).HasColumnName("IdFuncionario_Marcacao");
-
-                entity.HasOne(d => d.IdFuncionarioNavigation)
-                    .WithMany(p => p.FuncionarioMarcacaos)
-                    .HasForeignKey(d => d.IdFuncionario)
-                    .OnDelete(DeleteBehavior.ClientSetNull)
-                    .HasConstraintName("FK_Funcionario_Marcacao_Funcionario");
-
-                entity.HasOne(d => d.IdMarcacaoNavigation)
-                    .WithMany(p => p.FuncionarioMarcacaos)
-                    .HasForeignKey(d => d.IdMarcacao)
-                    .OnDelete(DeleteBehavior.ClientSetNull)
-                    .HasConstraintName("FK_Funcionario_Marcacao_Marcacao");
-            });
-
-            modelBuilder.Entity<Marcacao>(entity =>
-            {
+            modelBuilder.Entity<Marcacao>(entity => {
                 entity.HasKey(e => e.IdMarcacao);
 
                 entity.ToTable("Marcacao");
@@ -135,11 +107,23 @@ namespace SampleWebApiAspNetCore.Models
                     .HasColumnType("datetime")
                     .HasColumnName("Ultima_atualizacao");
 
-                entity.HasOne(d => d.IdPacienteNavigation)
-                    .WithMany(p => p.Marcacaos)
+                entity.HasOne(d => d.PacienteNavigation)
+                    .WithMany(p => p.Marcacao)
                     .HasForeignKey(d => d.IdPaciente)
                     .OnDelete(DeleteBehavior.ClientSetNull)
                     .HasConstraintName("FK_Marcacao_Paciente");
+
+                entity.HasOne(d => d.FuncionarioNavigation)
+                    .WithMany(p => p.Marcacao)
+                    .HasForeignKey(d => d.IdFuncionario)
+                    .OnDelete(DeleteBehavior.ClientSetNull)
+                    .HasConstraintName("FK_Marcacao_Funcionario");
+
+                //entity.HasOne(d => d.TecnicoNavigation)
+                //    .WithMany(p => p.Marcacao)
+                //    .HasForeignKey(d => d.IdTecnico)
+                //    .OnDelete(DeleteBehavior.ClientSetNull)
+                //    .HasConstraintName("FK_Marcacao_Tecnico");
             });
 
             modelBuilder.Entity<Paciente>(entity =>
@@ -180,11 +164,6 @@ namespace SampleWebApiAspNetCore.Models
                     .IsRequired()
                     .HasMaxLength(50);
 
-                entity.HasOne(d => d.IdUtilizadorNavigation)
-                    .WithMany(p => p.Pacientes)
-                    .HasForeignKey(d => d.IdUtilizador)
-                    .OnDelete(DeleteBehavior.ClientSetNull)
-                    .HasConstraintName("FK_Paciente_Utilizador");
             });
 
             modelBuilder.Entity<Utilizador>(entity =>
@@ -200,6 +179,18 @@ namespace SampleWebApiAspNetCore.Models
                 entity.Property(e => e.Senha)
                     .IsRequired()
                     .HasMaxLength(50);
+
+                entity.HasOne<Funcionario>(u => u.Funcionario)
+                    .WithOne(f => f.UtilizadorNavigation)
+                    .HasForeignKey<Funcionario>(f => f.IdUtilizador)
+                    .OnDelete(DeleteBehavior.ClientSetNull)
+                    .HasConstraintName("FK_Funcionario_Utilizador");
+
+                entity.HasOne<Paciente>(u => u.Paciente)
+                    .WithOne(p => p.UtilizadorNavigation)
+                    .HasForeignKey<Paciente>(p => p.IdUtilizador)
+                    .OnDelete(DeleteBehavior.ClientSetNull)
+                    .HasConstraintName("FK_Paciente_Utilizador");
             });
 
             OnModelCreatingPartial(modelBuilder);

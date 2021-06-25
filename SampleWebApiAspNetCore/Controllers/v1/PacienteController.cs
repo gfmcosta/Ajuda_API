@@ -66,6 +66,18 @@ namespace SampleWebApiAspNetCore.v1.Controllers
                                 _allItems = _allItems
                                     .Where(x => x.Nif==filter);
                                 break;
+                            case "idpaciente":
+                                _allItems = _allItems
+                                    .Where(x => x.IdPaciente.ToString() == filter);
+                                break;
+                            case "email":
+                                _allItems = _allItems
+                                    .Where(x => x.Email == filter);
+                                break;
+                            case "nifx":
+                                _allItems = _allItems
+                                    .Where(x => x.Nif.StartsWith(filter));
+                                break;
                         }
                     }
                 }
@@ -73,6 +85,7 @@ namespace SampleWebApiAspNetCore.v1.Controllers
             }
 
             return _allItems
+                .OrderByDescending(x=> x.IdPaciente)
                 .Skip(queryParameters.PageCount * (queryParameters.Page - 1))
                 .Take(queryParameters.PageCount);
         }
@@ -165,11 +178,11 @@ namespace SampleWebApiAspNetCore.v1.Controllers
                 throw new Exception("Creating a paciente failed on save.");
             }
 
-            Paciente newPacienteItem = _context.Paciente.FirstOrDefault(x => x.IdPaciente == toAdd.IdPaciente);
+           // Paciente newPacienteItem = _context.Paciente.FirstOrDefault(x => x.IdPaciente == toAdd.IdPaciente);
 
             return CreatedAtRoute(nameof(GetSinglePaciente),
-                new { version = version.ToString(), id = newPacienteItem.IdPaciente },
-                _mapper.Map<Paciente>(newPacienteItem));
+                new { version = version.ToString(), id = toAdd.IdPaciente },
+                _mapper.Map<PacienteCreateDto>(toAdd));
         }
 
         [HttpPatch("{id:int}", Name = nameof(PartiallyUpdatePaciente))]
@@ -207,6 +220,21 @@ namespace SampleWebApiAspNetCore.v1.Controllers
 
             return Ok(_mapper.Map<Paciente>(existingEntity));
         }
+
+        [HttpGet(Name = nameof(GetMaxID))]
+        private IQueryable<Paciente> GetMaxID(QueryParameters queryParameters) {
+
+            IQueryable<Paciente> _allItems = _context.Paciente;
+
+            if (queryParameters.OrderBy == "") {
+                _allItems = (IQueryable<Paciente>) _allItems.OrderByDescending(x => x.IdPaciente).FirstOrDefault();
+            }
+
+            return _allItems
+                .Skip(queryParameters.PageCount * (queryParameters.Page - 1))
+                .Take(queryParameters.PageCount);
+        }
+
 
         [HttpDelete]
         [Route("{id:int}", Name = nameof(RemovePaciente))]

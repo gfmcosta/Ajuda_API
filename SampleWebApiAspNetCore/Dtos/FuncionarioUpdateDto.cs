@@ -15,6 +15,7 @@ namespace SampleWebApiAspNetCore.Dtos
         public string CC { get; set; }
         public string NIF { get; set; }
         public int Funcao { get; set; }
+        public Boolean Ativo { get; set; }
 
     }
 }

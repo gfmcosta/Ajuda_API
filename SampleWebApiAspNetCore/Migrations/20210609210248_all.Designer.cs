@@ -10,8 +10,8 @@ using SampleWebApiAspNetCore.Models;
 namespace SampleWebApiAspNetCore.Migrations
 {
     [DbContext(typeof(testePAPContext))]
-    [Migration("20210405124847_perfil")]
-    partial class perfil
+    [Migration("20210609210248_all")]
+    partial class all
     {
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
@@ -62,7 +62,7 @@ namespace SampleWebApiAspNetCore.Migrations
                     b.Property<int>("Funcao")
                         .HasColumnType("int");
 
-                    b.Property<int>("IdUtilizador")
+                    b.Property<int?>("IdUtilizador")
                         .HasColumnType("int");
 
                     b.Property<string>("Nacionalidade")
@@ -77,10 +77,6 @@ namespace SampleWebApiAspNetCore.Migrations
 
                     b.Property<string>("Nome")
                         .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("nvarchar(50)");
-
-                    b.Property<string>("Senha")
                         .HasMaxLength(50)
                         .HasColumnType("nvarchar(50)");
 
@@ -100,32 +96,11 @@ namespace SampleWebApiAspNetCore.Migrations
 
                     b.HasIndex("Funcao");
 
-                    b.HasIndex("IdUtilizador");
+                    b.HasIndex("IdUtilizador")
+                        .IsUnique()
+                        .HasFilter("[IdUtilizador] IS NOT NULL");
 
                     b.ToTable("Funcionario");
-                });
-
-            modelBuilder.Entity("SampleWebApiAspNetCore.Models.FuncionarioMarcacao", b =>
-                {
-                    b.Property<int>("IdFuncionarioMarcacao")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int")
-                        .HasColumnName("IdFuncionario_Marcacao")
-                        .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
-
-                    b.Property<int>("IdFuncionario")
-                        .HasColumnType("int");
-
-                    b.Property<int>("IdMarcacao")
-                        .HasColumnType("int");
-
-                    b.HasKey("IdFuncionarioMarcacao");
-
-                    b.HasIndex("IdFuncionario");
-
-                    b.HasIndex("IdMarcacao");
-
-                    b.ToTable("Funcionario_Marcacao");
                 });
 
             modelBuilder.Entity("SampleWebApiAspNetCore.Models.Marcacao", b =>
@@ -141,7 +116,13 @@ namespace SampleWebApiAspNetCore.Migrations
                     b.Property<TimeSpan>("Hora")
                         .HasColumnType("time");
 
+                    b.Property<int?>("IdFuncionario")
+                        .HasColumnType("int");
+
                     b.Property<int>("IdPaciente")
+                        .HasColumnType("int");
+
+                    b.Property<int>("IdTecnico")
                         .HasColumnType("int");
 
                     b.Property<string>("Qrcode")
@@ -155,6 +136,9 @@ namespace SampleWebApiAspNetCore.Migrations
                         .HasMaxLength(50)
                         .HasColumnType("nvarchar(50)");
 
+                    b.Property<int?>("TecnicoNavigationIdFuncionario")
+                        .HasColumnType("int");
+
                     b.Property<string>("Tipo")
                         .IsRequired()
                         .HasMaxLength(50)
@@ -166,7 +150,11 @@ namespace SampleWebApiAspNetCore.Migrations
 
                     b.HasKey("IdMarcacao");
 
+                    b.HasIndex("IdFuncionario");
+
                     b.HasIndex("IdPaciente");
+
+                    b.HasIndex("TecnicoNavigationIdFuncionario");
 
                     b.ToTable("Marcacao");
                 });
@@ -192,7 +180,7 @@ namespace SampleWebApiAspNetCore.Migrations
                         .HasMaxLength(50)
                         .HasColumnType("nvarchar(50)");
 
-                    b.Property<int>("IdUtilizador")
+                    b.Property<int?>("IdUtilizador")
                         .HasColumnType("int");
 
                     b.Property<string>("Nacionalidade")
@@ -210,12 +198,6 @@ namespace SampleWebApiAspNetCore.Migrations
                         .HasMaxLength(50)
                         .HasColumnType("nvarchar(50)");
 
-                    b.Property<string>("Senha")
-                        .IsRequired()
-                        .HasMaxLength(10)
-                        .HasColumnType("nchar(10)")
-                        .IsFixedLength(true);
-
                     b.Property<string>("Sexo")
                         .IsRequired()
                         .HasMaxLength(10)
@@ -230,7 +212,9 @@ namespace SampleWebApiAspNetCore.Migrations
 
                     b.HasKey("IdPaciente");
 
-                    b.HasIndex("IdUtilizador");
+                    b.HasIndex("IdUtilizador")
+                        .IsUnique()
+                        .HasFilter("[IdUtilizador] IS NOT NULL");
 
                     b.ToTable("Paciente");
                 });
@@ -246,9 +230,6 @@ namespace SampleWebApiAspNetCore.Migrations
                         .IsRequired()
                         .HasMaxLength(50)
                         .HasColumnType("nvarchar(50)");
-
-                    b.Property<string>("Perfil")
-                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("Senha")
                         .IsRequired()
@@ -268,56 +249,48 @@ namespace SampleWebApiAspNetCore.Migrations
                         .HasConstraintName("FK_Funcionario_Funcao")
                         .IsRequired();
 
-                    b.HasOne("SampleWebApiAspNetCore.Models.Utilizador", "IdUtilizadorNavigation")
-                        .WithMany("Funcionarios")
-                        .HasForeignKey("IdUtilizador")
-                        .HasConstraintName("FK_Funcionario_Utilizador")
-                        .IsRequired();
+                    b.HasOne("SampleWebApiAspNetCore.Models.Utilizador", "UtilizadorNavigation")
+                        .WithOne("Funcionario")
+                        .HasForeignKey("SampleWebApiAspNetCore.Models.Funcionario", "IdUtilizador")
+                        .HasConstraintName("FK_Funcionario_Utilizador");
 
                     b.Navigation("FuncaoNavigation");
 
-                    b.Navigation("IdUtilizadorNavigation");
-                });
-
-            modelBuilder.Entity("SampleWebApiAspNetCore.Models.FuncionarioMarcacao", b =>
-                {
-                    b.HasOne("SampleWebApiAspNetCore.Models.Funcionario", "IdFuncionarioNavigation")
-                        .WithMany("FuncionarioMarcacaos")
-                        .HasForeignKey("IdFuncionario")
-                        .HasConstraintName("FK_Funcionario_Marcacao_Funcionario")
-                        .IsRequired();
-
-                    b.HasOne("SampleWebApiAspNetCore.Models.Marcacao", "IdMarcacaoNavigation")
-                        .WithMany("FuncionarioMarcacaos")
-                        .HasForeignKey("IdMarcacao")
-                        .HasConstraintName("FK_Funcionario_Marcacao_Marcacao")
-                        .IsRequired();
-
-                    b.Navigation("IdFuncionarioNavigation");
-
-                    b.Navigation("IdMarcacaoNavigation");
+                    b.Navigation("UtilizadorNavigation");
                 });
 
             modelBuilder.Entity("SampleWebApiAspNetCore.Models.Marcacao", b =>
                 {
-                    b.HasOne("SampleWebApiAspNetCore.Models.Paciente", "IdPacienteNavigation")
-                        .WithMany("Marcacaos")
+                    b.HasOne("SampleWebApiAspNetCore.Models.Funcionario", "FuncionarioNavigation")
+                        .WithMany("Marcacao")
+                        .HasForeignKey("IdFuncionario")
+                        .HasConstraintName("FK_Marcacao_Funcionario");
+
+                    b.HasOne("SampleWebApiAspNetCore.Models.Paciente", "PacienteNavigation")
+                        .WithMany("Marcacao")
                         .HasForeignKey("IdPaciente")
                         .HasConstraintName("FK_Marcacao_Paciente")
                         .IsRequired();
 
-                    b.Navigation("IdPacienteNavigation");
+                    b.HasOne("SampleWebApiAspNetCore.Models.Funcionario", "TecnicoNavigation")
+                        .WithMany()
+                        .HasForeignKey("TecnicoNavigationIdFuncionario");
+
+                    b.Navigation("FuncionarioNavigation");
+
+                    b.Navigation("PacienteNavigation");
+
+                    b.Navigation("TecnicoNavigation");
                 });
 
             modelBuilder.Entity("SampleWebApiAspNetCore.Models.Paciente", b =>
                 {
-                    b.HasOne("SampleWebApiAspNetCore.Models.Utilizador", "IdUtilizadorNavigation")
-                        .WithMany("Pacientes")
-                        .HasForeignKey("IdUtilizador")
-                        .HasConstraintName("FK_Paciente_Utilizador")
-                        .IsRequired();
+                    b.HasOne("SampleWebApiAspNetCore.Models.Utilizador", "UtilizadorNavigation")
+                        .WithOne("Paciente")
+                        .HasForeignKey("SampleWebApiAspNetCore.Models.Paciente", "IdUtilizador")
+                        .HasConstraintName("FK_Paciente_Utilizador");
 
-                    b.Navigation("IdUtilizadorNavigation");
+                    b.Navigation("UtilizadorNavigation");
                 });
 
             modelBuilder.Entity("SampleWebApiAspNetCore.Models.Funcao", b =>
@@ -327,24 +300,19 @@ namespace SampleWebApiAspNetCore.Migrations
 
             modelBuilder.Entity("SampleWebApiAspNetCore.Models.Funcionario", b =>
                 {
-                    b.Navigation("FuncionarioMarcacaos");
-                });
-
-            modelBuilder.Entity("SampleWebApiAspNetCore.Models.Marcacao", b =>
-                {
-                    b.Navigation("FuncionarioMarcacaos");
+                    b.Navigation("Marcacao");
                 });
 
             modelBuilder.Entity("SampleWebApiAspNetCore.Models.Paciente", b =>
                 {
-                    b.Navigation("Marcacaos");
+                    b.Navigation("Marcacao");
                 });
 
             modelBuilder.Entity("SampleWebApiAspNetCore.Models.Utilizador", b =>
                 {
-                    b.Navigation("Funcionarios");
+                    b.Navigation("Funcionario");
 
-                    b.Navigation("Pacientes");
+                    b.Navigation("Paciente");
                 });
 #pragma warning restore 612, 618
         }

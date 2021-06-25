@@ -10,6 +10,7 @@ using SampleWebApiAspNetCore.Helpers;
 using System.Text.Json;
 using System.Linq.Dynamic.Core;
 using Microsoft.AspNetCore.WebUtilities;
+using SampleWebApiAspNetCore.Services;
 
 namespace SampleWebApiAspNetCore.v1.Controllers
 {
@@ -33,7 +34,28 @@ namespace SampleWebApiAspNetCore.v1.Controllers
             _urlHelper = urlHelper;
         }
 
-            private IQueryable<Funcionario> GetAll(QueryParameters queryParameters)
+        private IList<Funcionario> GetFilter(FilterDTO filter) {
+
+            IQueryable<Funcionario> _allItems = _context.Funcionario;
+            _allItems = _allItems.ToFilterView(filter);
+            return _allItems.ToList();
+        }
+
+        [HttpPost]
+        [Route("filter")]
+        public ActionResult GetFilterFuncionario(ApiVersion version, FilterDTO filter) {
+            List<Funcionario> funcionario = GetFilter(filter).ToList();
+            var allItemCount = _context.Funcionario.Count();
+
+            var toReturn = funcionario.Select(x => ExpandSingleFuncionarioItem(x, version));
+
+            return Ok(new {
+                value = toReturn
+            });
+        }
+
+
+        private IQueryable<Funcionario> GetAll(QueryParameters queryParameters)
             {
 
             IQueryable<Funcionario> _allItems = _context.Funcionario;
@@ -61,6 +83,19 @@ namespace SampleWebApiAspNetCore.v1.Controllers
                             case "nif":
                                 _allItems = _allItems
                                     .Where(x => x.Nif == filter);
+                                break;
+
+                            case "idfuncionario":
+                                _allItems = _allItems
+                                    .Where(x => x.IdFuncionario == Convert.ToInt32(filter));
+                                break;
+                            case "email":
+                                _allItems = _allItems
+                                    .Where(x => x.Email == filter);
+                                break;
+                            case "nifx":
+                                _allItems = _allItems
+                                    .Where(x => x.Nif.StartsWith(filter));
                                 break;
                         }
                     }
@@ -122,9 +157,15 @@ namespace SampleWebApiAspNetCore.v1.Controllers
             {
                 return BadRequest();
             }
+            Utilizador toAddUtil = new Utilizador{ Login = funcionarioCreateDto.NIF, Senha = funcionarioCreateDto.Senha };
+            _context.Utilizador.Add(toAddUtil);
+
+            if (_context.SaveChanges() == 0) {
+                throw new Exception("Creating a utilizador failed on save.");
+            }
 
             Funcionario toAdd = _mapper.Map<Funcionario>(funcionarioCreateDto);
-
+            toAdd.IdUtilizador = toAddUtil.IdUtilizador;
             _context.Add(toAdd);
 
             if (_context.SaveChanges() == 0)
@@ -132,11 +173,11 @@ namespace SampleWebApiAspNetCore.v1.Controllers
                 throw new Exception("Creating a funcionario failed on save.");
             }
 
-            Funcionario newFuncionarioItem = _context.Funcionario.FirstOrDefault(x => x.IdFuncionario == toAdd.IdFuncionario);
+           // Funcionario newFuncionarioItem = _context.Funcionario.FirstOrDefault(x => x.IdFuncionario == toAdd.IdFuncionario);
 
             return CreatedAtRoute(nameof(GetSingleFuncionario),
-                new { version = version.ToString(), id = newFuncionarioItem.IdFuncionario },
-                _mapper.Map<Funcionario>(newFuncionarioItem));
+                new { version = version.ToString(), id = toAdd.IdFuncionario },
+                _mapper.Map<FuncionarioCreateDto>(toAdd));
         }
 
         [HttpPatch("{id:int}", Name = nameof(PartiallyUpdateFuncionario))]
