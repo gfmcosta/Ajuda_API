@@ -131,7 +131,6 @@ namespace SampleWebApiAspNetCore.v1.Controllers
             }
 
             Utilizador toAdd = _mapper.Map<Utilizador>(utilizadorCreateDto);
-
             _context.Add(toAdd);
 
             if (_context.SaveChanges() == 0)
@@ -140,7 +139,6 @@ namespace SampleWebApiAspNetCore.v1.Controllers
             }
 
             Utilizador newUtilizadorItem = _context.Utilizador.FirstOrDefault(x => x.IdUtilizador == toAdd.IdUtilizador);
-
             return CreatedAtRoute(nameof(GetSingleUtilizador),
                 new { version = version.ToString(), id = newUtilizadorItem.IdUtilizador },
                 _mapper.Map<Utilizador>(newUtilizadorItem));

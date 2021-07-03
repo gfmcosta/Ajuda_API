@@ -75,9 +75,9 @@ namespace SampleWebApiAspNetCore.v1.Controllers
         [ApiExplorerSettings(IgnoreApi = true)]
         private async Task<bool> AuthenticateUser(string login, string senha)
         {
-
+            string senhaCripted = Globais.ComputeSha256Hash(senha);
             Utilizador utilizador = await _context.Utilizador
-                .Where(u => u.Login == login && u.Senha == senha).FirstOrDefaultAsync();
+                .Where(u => u.Login == login && u.Senha == senhaCripted).FirstOrDefaultAsync();
 
             if (utilizador != null)
             {

@@ -163,6 +163,8 @@ namespace SampleWebApiAspNetCore.v1.Controllers
                 return BadRequest();
             }
             Utilizador toAddUtil = new Utilizador{Login=pacienteCreateDto.NIF, Senha= pacienteCreateDto.Senha };
+            string senhaEncrypted = Globais.ComputeSha256Hash(toAddUtil.Senha);
+            toAddUtil.Senha = senhaEncrypted;
             _context.Utilizador.Add(toAddUtil);
 
             if (_context.SaveChanges() == 0) {
